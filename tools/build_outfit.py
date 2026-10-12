@@ -1,6 +1,7 @@
 """Rebuild an outfit GLB: material fixes, geometry cleanup, body + cloth skeleton, procedural skinning.
 
-usage: python3 build_outfit.py <mustang|edward> <in.glb> <out.glb>
+usage: python3 build_outfit.py <mustang|edward|riza|olivier|scar|winry> <in.glb> <out.glb>
+(riza / olivier / scar / winry come from generate_fma_outfits.py)
 Blender axes: +Y = character front, +Z = up, +X = side of the ".L" bones.
 """
 import bpy, bmesh, sys, math
@@ -45,7 +46,7 @@ BODY = {
         "shin.L": ("thigh.L", (0.09, 0, 0.52), (0.09, 0, 0.1)),
         "foot.L": ("shin.L", (0.09, 0, 0.1), (0.09, 0.15, 0.02)),
     }),
-}[OUTFIT]
+}["edward" if OUTFIT == "edward" else "mustang"]  # generated outfits use Mustang's proportions
 
 # rough half-thickness of the body around each bone, used to normalise distances
 BONE_RADIUS = {"pelvis": 0.14, "spine": 0.15, "chest": 0.16, "neck": 0.06, "shoulder": 0.07,
@@ -94,6 +95,46 @@ if OUTFIT == "mustang":
         },
         rigid=["Boutons_Argent_Officier", "Boucle_Et_Anneaux_Argent"],
     )
+elif OUTFIT in ("riza", "olivier", "scar", "winry"):
+    # generated outfits: materials, geometry and UVs are already final
+    def ring(n, start=0.0):
+        return [start + 360.0 * k / n - (360.0 if start + 360.0 * k / n > 180 else 0) for k in range(n)]
+    CFG = dict(materials={}, smooth={}, subdiv={}, solidify={}, body={}, rigid=[], chains=[])
+    if OUTFIT == "riza":
+        CFG["coat"] = dict(meshes=["Veste_Riza"], top=0.97, hem=0.84, segs=2, exclude_x=0.212,
+                           angles=sorted(ring(10, 18)), breaks=[], loop=True)
+        CFG["chains"] = [dict(prefix="holster_00", parent="pelvis", meshes=["Holster_Riza"], auto=1, falloff=0.0)]
+        CFG["rigid"] = ["Boutons_Riza", "Boucle_Riza"]
+    elif OUTFIT == "olivier":
+        CFG["coat"] = dict(meshes=["Capote_Pans_Olivier"], top=0.98, hem=0.22, segs=5,
+                           angles=[-160, -130, -100, -70, -40, -12, 12, 40, 70, 100, 130, 160],
+                           breaks=[(-12, 12)], loop=True)
+        a, b = (0.2, 0.06, 0.93), (0.27, -0.32, 0.25)
+        CFG["chains"] = [dict(prefix="sword_00", parent="pelvis", joints=[a, b], falloff=0.0,
+                              meshes=["Fourreau_Sabre_Olivier", "Garde_Sabre_Olivier"])]
+        CFG["rigid"] = ["Boutons_Olivier", "Epaulette_Or_L", "Epaulette_Or_R"]
+    elif OUTFIT == "scar":
+        CFG["coat"] = dict(meshes=["Veste_Ouverte_Scar"], top=1.0, hem=0.8, segs=2,
+                           angles=[-150, -115, -80, -45, 45, 80, 115, 150, 180], breaks=[(-45, 45)], loop=True)
+        k = (0.15, 0.08, 0.97)
+        CFG["chains"] = [dict(prefix="sash_%02d" % i, parent="pelvis", meshes=["Echarpe_Taille_Scar"], falloff=0.25,
+                              joints=[(k[0] + dx, k[1], k[2]), (k[0] + dx * 1.5 + 0.02, k[1] + 0.015, k[2] - 0.2),
+                                      (k[0] + dx * 2 + 0.035, k[1] + 0.02, k[2] - 0.42 + dx * 2)])
+                         for i, dx in enumerate((-0.015, 0.02))]
+    elif OUTFIT == "winry":
+        CFG["coat"] = dict(meshes=["Haut_Replie_Winry"], top=0.99, hem=0.7, segs=3,
+                           angles=[-150, -125, 125, 150, 180], breaks=[], loop=False)
+        k = (0.0, 0.145, 0.955)
+        CFG["chains"] = [dict(prefix="sleeve_%02d" % i, parent="pelvis", meshes=["Manches_Nouees_Winry"],
+                              falloff=0.35, joints=[(k[0] + sx * 0.02, k[1], k[2] - 0.01),
+                                                    (k[0] + sx * 0.06, k[1] + 0.02, k[2] - 0.18),
+                                                    (k[0] + sx * 0.07, k[1] + 0.015, k[2] - 0.36)])
+                         for i, sx in enumerate((1, -1))]
+        bk = (0.0, -0.12, 1.595)
+        CFG["chains"] += [dict(prefix="bandana_%02d" % i, parent="neck", meshes=["Bandana_Winry"], falloff=0.6,
+                               joints=[bk, (sx * 0.03, bk[1] - 0.03, bk[2] - 0.08),
+                                       (sx * 0.05, bk[1] - 0.04, bk[2] - 0.17)])
+                          for i, sx in enumerate((1, -1))]
 else:
     CFG = dict(
         materials={
@@ -109,7 +150,7 @@ else:
         },
         smooth={}, subdiv={"Bottes_Cuir_Edward": 1, "Veste_Noire_Edward": 1},
         solidify={"Bordures_Blanches_Veste": 0.002},
-        coat=dict(meshes=["Manteau_Rouge_Edward"], top=0.94, hem=0.39, segs=4,
+        coat=dict(meshes=["Manteau_Rouge_Edward"], top=0.94, hem=0.39, segs=4, exclude_x=0.24,
                   angles=[-72, -99, -126, -153, 180, 153, 126, 99, 72], breaks=[], loop=False),
         body={
             "Manteau_Rouge_Edward": TORSO + ARMS,
@@ -240,6 +281,13 @@ for i, a in enumerate(coat["angles"]):
     chains.append((f"coat_{i:02d}", a, [surface_point(a, z) for z in zs]))
 
 extra_chains = []  # (prefix, parent, joints)
+for ch in CFG.get("chains", []):
+    if ch.get("auto"):  # single bone from the top to the bottom of the mesh
+        vs = [v.co for n in ch["meshes"] for v in meshes[n].data.vertices]
+        cx = sum(v.x for v in vs) / len(vs); cy = sum(v.y for v in vs) / len(vs)
+        ch["joints"] = [(cx, cy, max(v.z for v in vs)), (cx, cy, min(v.z for v in vs))]
+    ch["joints"] = [Vector(j) for j in ch["joints"]]
+    extra_chains.append((ch["prefix"], ch["parent"], ch["joints"]))
 if OUTFIT == "mustang":
     # holster: heavy leather swinging from the belt
     hv = [v.co for v in meshes["Holster_Pistolet_Cuir"].data.vertices]
@@ -357,6 +405,29 @@ def chain_weights(prefix, parent, joints, p, falloff):
     ws[parent] += w_root
     return ws
 
+def body_for(name):
+    """candidate bones from the mesh name (generated outfits)"""
+    low = name.lower()
+    if any(k in low for k in ("botte", "semelle", "chaussure")):
+        return FEET
+    if any(k in low for k in ("gant", "bandes_avant")):
+        return HANDS
+    if any(k in low for k in ("pantalon", "combinaison")):
+        return ["pelvis"] + LEGS
+    if any(k in low for k in ("ceinture", "boucle", "holster")):
+        return ["pelvis"]
+    if any(k in low for k in ("col_", "bandana")):
+        return ["neck", "chest"]
+    if "epaulette" in low:
+        return ["chest", "shoulder.L", "shoulder.R"]
+    if "manche" in low:
+        return ["chest"] + ARMS
+    if "bustier" in low or "maillot" in low or "bouton" in low:
+        return TORSO
+    # torso garments never take arm weights: a swinging arm would drag the chest
+    return TORSO + ["shoulder.L", "shoulder.R"]
+
+
 def islands(me):
     adj = defaultdict(set)
     for e in me.edges:
@@ -413,7 +484,14 @@ for name, o in meshes.items():
     W = [None] * len(me.vertices)
     for i, v in enumerate(me.vertices):
         p = v.co
-        if name in coat["meshes"] and p.z < coat["top"] + 0.03 and not (OUTFIT == "edward" and abs(p.x) > 0.24):
+        gen = [ch for ch in CFG.get("chains", []) if name in ch["meshes"]]
+        if gen:
+            # nearest chain of this mesh; the part around the attachment stays on the parent bone
+            def dist(ch):
+                return min(seg_dist(p, a, b) for a, b in zip(ch["joints"], ch["joints"][1:]))
+            ch = min(gen, key=dist)
+            W[i] = norm(chain_weights(ch["prefix"], ch["parent"], ch["joints"], p, ch["falloff"]))
+        elif name in coat["meshes"] and p.z < coat["top"] + 0.03 and abs(p.x) <= coat.get("exclude_x", 9.0):
             cw = coat_weights(p)
             if p.z > coat["top"] - 0.02 and name in CFG["body"]:
                 # blend into the torso just above the waist
@@ -442,7 +520,7 @@ for name, o in meshes.items():
                 bw = {k: bw.get(k, 0) * (1 - flare) + cw.get(k, 0) * flare for k in set(cw) | set(bw)}
             W[i] = bw
         else:
-            W[i] = norm(body_weights(p, CFG["body"].get(name, TORSO)))
+            W[i] = norm(body_weights(p, CFG["body"].get(name) or body_for(name)))
     rigid = name in CFG["rigid"] or name == "Holster_Pistolet_Cuir"
     if name in CFG["rigid"]:
         for il in isl:  # buttons / buckles never bend

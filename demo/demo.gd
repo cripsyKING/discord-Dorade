@@ -10,6 +10,14 @@ const OUTFITS := [
 		"skin": Color(0.93, 0.76, 0.64), "hair": Color(0.05, 0.05, 0.06)},
 	{"name": "Edward Elric", "glb": "res://assets/outfits/tenue_edward.glb", "arm_down": 52.0,
 		"skin": Color(0.95, 0.8, 0.68), "hair": Color(0.85, 0.66, 0.25)},
+	{"name": "Riza Hawkeye", "glb": "res://assets/outfits/tenue_riza.glb", "arm_down": 0.0,
+		"skin": Color(0.95, 0.8, 0.7), "hair": Color(0.88, 0.74, 0.42)},
+	{"name": "Olivier Mira Armstrong", "glb": "res://assets/outfits/tenue_olivier.glb", "arm_down": 0.0,
+		"skin": Color(0.96, 0.84, 0.76), "hair": Color(0.93, 0.85, 0.6)},
+	{"name": "Scar", "glb": "res://assets/outfits/tenue_scar.glb", "arm_down": 0.0,
+		"skin": Color(0.48, 0.32, 0.22), "hair": Color(0.82, 0.82, 0.8)},
+	{"name": "Winry Rockbell", "glb": "res://assets/outfits/tenue_winry.glb", "arm_down": 0.0,
+		"skin": Color(0.96, 0.82, 0.72), "hair": Color(0.92, 0.8, 0.5)},
 ]
 const WIND_LEVELS := [2.5, 6.0, 11.0]
 

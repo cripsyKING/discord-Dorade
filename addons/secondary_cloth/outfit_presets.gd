@@ -84,10 +84,115 @@ static func edward() -> Dictionary:
 	}
 
 
+## Riza Hawkeye: military jacket with a short peplum (classic wool), holster at the back.
+static func riza() -> Dictionary:
+	var hem_p := ClothProfile.classic()
+	hem_p.resource_name = "Basque de veste (laine)"
+	hem_p.pose_stiffness = 4.5
+	hem_p.tip_stiffness_scale = 0.6
+	hem_p.air_drag = 2.4
+	hem_p.max_angle = 45.0
+	hem_p.max_bend = 25.0
+	hem_p.flare = 1.2
+	var hem := ClothChainGroup.make("coat", "coat_", hem_p)
+	hem.closed_loop = true
+	var holster_p := ClothProfile.thick()
+	holster_p.max_angle = 30.0
+	var holster := ClothChainGroup.make("holster", "holster_", holster_p)
+	holster.link_neighbours = false
+	holster.tip_length_scale = 1.15
+	holster.ignored_colliders = PackedStringArray(["torso", "forearm.L", "forearm.R"])
+	return {"groups": [hem, holster] as Array[ClothChainGroup], "colliders": body_colliders(0.13, 0.09, 0.07)}
+
+
+## Olivier Mira Armstrong: heavy Briggs greatcoat down to the ankles, open at the front
+## below the belt, sabre swinging at the hip.
+static func olivier() -> Dictionary:
+	var coat_p := ClothProfile.long_coat()
+	coat_p.resource_name = "Capote de Briggs (laine épaisse)"
+	coat_p.pose_stiffness = 5.0
+	coat_p.tip_stiffness_scale = 0.35
+	coat_p.gravity_scale = 1.1
+	coat_p.air_drag = 1.7
+	coat_p.wind_sensitivity = 0.7
+	coat_p.flutter = 0.06
+	coat_p.flare = 0.9
+	coat_p.inertia_transfer = 0.3
+	coat_p.max_angle = 80.0
+	coat_p.max_bend = 26.0
+	coat_p.lateral_max_stretch = 1.2
+	var coat := ClothChainGroup.make("coat", "coat_", coat_p)
+	coat.closed_loop = true
+	coat.slits = PackedStringArray(["coat_05:coat_06"])  # front opening
+	var sword_p := ClothProfile.thick()
+	sword_p.resource_name = "Sabre (rigide)"
+	sword_p.max_angle = 28.0
+	sword_p.air_drag = 0.3
+	var sword := ClothChainGroup.make("sword", "sword_", sword_p)
+	sword.link_neighbours = false
+	sword.tip_length_scale = 5.2  # single 0.78 m bone
+	sword.ignored_colliders = PackedStringArray(["torso", "forearm.L", "forearm.R", "hips"])
+	return {"groups": [coat, sword] as Array[ClothChainGroup], "colliders": body_colliders(0.13, 0.095, 0.075)}
+
+
+## Scar: open canvas jacket (front flaps) and a light sash knotted on the hip.
+static func scar() -> Dictionary:
+	var jacket_p := ClothProfile.classic()
+	jacket_p.resource_name = "Veste ouverte (toile)"
+	jacket_p.pose_stiffness = 6.0
+	jacket_p.air_drag = 2.0
+	jacket_p.max_angle = 55.0
+	jacket_p.max_bend = 30.0
+	jacket_p.flutter = 0.15
+	var jacket := ClothChainGroup.make("coat", "coat_", jacket_p)
+	jacket.closed_loop = true
+	jacket.slits = PackedStringArray(["coat_03:coat_04"])
+	var sash_p := ClothProfile.light()
+	sash_p.resource_name = "Écharpe nouée (léger)"
+	var sash := ClothChainGroup.make("sash", "sash_", sash_p)
+	sash.link_neighbours = true
+	sash.max_link_angle = 90.0
+	sash.ignored_colliders = PackedStringArray(["torso", "forearm.L", "forearm.R"])
+	return {"groups": [jacket, sash] as Array[ClothChainGroup], "colliders": body_colliders(0.13, 0.1, 0.075)}
+
+
+## Winry Rockbell: jumpsuit top folded down at the back, sleeves knotted at the waist,
+## bandana tails.
+static func winry() -> Dictionary:
+	var drape_p := ClothProfile.classic()
+	drape_p.resource_name = "Haut de combinaison replié"
+	drape_p.pose_stiffness = 6.0
+	drape_p.max_angle = 60.0
+	drape_p.max_bend = 32.0
+	var drape := ClothChainGroup.make("coat", "coat_", drape_p)
+	var sleeve_p := ClothProfile.classic()
+	sleeve_p.resource_name = "Manches nouées"
+	sleeve_p.pose_stiffness = 4.0
+	sleeve_p.air_drag = 2.2
+	sleeve_p.max_angle = 70.0
+	var sleeves := ClothChainGroup.make("sleeves", "sleeve_", sleeve_p)
+	sleeves.max_link_angle = 120.0
+	sleeves.ignored_colliders = PackedStringArray(["torso", "hips"])
+	var band_p := ClothProfile.light()
+	band_p.resource_name = "Pans de bandana"
+	var bandana := ClothChainGroup.make("bandana", "bandana_", band_p)
+	bandana.max_link_angle = 120.0
+	bandana.ignored_colliders = PackedStringArray(["hips", "thigh.L", "thigh.R", "shin.L", "shin.R", "forearm.L", "forearm.R"])
+	return {"groups": [drape, sleeves, bandana] as Array[ClothChainGroup], "colliders": body_colliders(0.13, 0.098, 0.08)}
+
+
 static func for_name(preset: String) -> Dictionary:
 	match preset:
 		"mustang":
 			return mustang()
 		"edward":
 			return edward()
+		"riza":
+			return riza()
+		"olivier":
+			return olivier()
+		"scar":
+			return scar()
+		"winry":
+			return winry()
 	return {}

@@ -1,7 +1,16 @@
 # Dorade : tenues et secondary motion du tissu (Godot 4)
 
-Système de **mouvement secondaire des vêtements** en temps réel pour Godot 4.4+, avec deux tenues
-améliorées : Roy Mustang (uniforme d'Amestris) et Edward Elric (manteau rouge).
+Système de **mouvement secondaire des vêtements** en temps réel pour Godot 4.4+, avec six tenues
+dans le style FMA. Ce sont uniquement des vêtements, sans corps :
+
+| Tenue | Origine | Tissus simulés |
+|---|---|---|
+| Roy Mustang | GLB fourni, amélioré | manteau militaire fendu, holster, aiguillette, pantalon bouffant |
+| Edward Elric | GLB fourni, amélioré | manteau rouge ouvert (cape) |
+| Riza Hawkeye | générée | basque de veste, holster |
+| Olivier Mira Armstrong | générée | capote de Briggs jusqu'aux chevilles, sabre |
+| Scar | générée | veste ouverte, écharpe nouée (deux pans) |
+| Winry Rockbell | générée | haut de combinaison replié, manches nouées, pans de bandana |
 
 ```
 godot --path . # lance la démo jouable (demo/demo.tscn)
@@ -85,9 +94,22 @@ python3 tools/build_outfit.py mustang assets/outfits/source/tenue_militaire_ames
 python3 tools/build_outfit.py edward assets/outfits/source/tenue_edward_elric.glb assets/outfits/tenue_edward.glb
 ```
 
+### Tenues générées
+
+`tools/generate_fma_outfits.py` modélise de façon procédurale les tenues de Riza, Olivier, Scar et
+Winry, sur les proportions du squelette de Mustang (compatibles avec le même corps). Les sections
+sont lissées, les plis sont modelés, chaque pièce a une épaisseur, et les UV sont ajoutées. Les GLB
+intermédiaires sont dans `assets/outfits/source/tenue_*_generee.glb`, puis passent par le même rig :
+
+```
+python3 tools/generate_fma_outfits.py olivier assets/outfits/source/tenue_olivier_generee.glb
+python3 tools/build_outfit.py olivier assets/outfits/source/tenue_olivier_generee.glb assets/outfits/tenue_olivier.glb
+```
+
 ## Utilisation dans le jeu
 
-Instancier `outfits/tenue_mustang.tscn` ou `outfits/tenue_edward.tscn` (nœud `ClothOutfit`), puis au choix :
+Instancier une scène de `outfits/` (`tenue_mustang.tscn`, `tenue_edward.tscn`, `tenue_riza.tscn`,
+`tenue_olivier.tscn`, `tenue_scar.tscn`, `tenue_winry.tscn` : nœud `ClothOutfit`), puis au choix :
 - animer directement son `Skeleton3D` (AnimationPlayer / AnimationTree) ;
 - ou le placer sur le personnage et renseigner `pose_source` avec le squelette du personnage
   (mêmes noms d'os, ou `bone_map` dans `BonePoseCopier`).
@@ -117,11 +139,12 @@ pas d'animations ; dans le jeu, ce sont vos animations qui la remplacent.
 
 ## Tests
 
-`tests/cloth_tests.gd` simule, pour chaque tenue : repos, marche, course, arrêt brusque, saut et
+`tests/cloth_tests.gd` simule, pour chaque tenue (ou seulement certaines :
+`godot --headless -s res://tests/cloth_tests.gd -- olivier scar`) : repos, marche, course, arrêt brusque, saut et
 atterrissage, demi-tour en 0,35 s, zigzag, vent et téléportation. Il vérifie :
 - la réaction du tissu dans chaque cas ;
 - le retour progressif à l'équilibre ;
-- l'absence de tremblement ;
+- l'absence de tremblement (une accélération qui change de sens à chaque image) ;
 - la mise en veille ;
 - l'absence d'étirement et de NaN ;
 - le respect des limites ;

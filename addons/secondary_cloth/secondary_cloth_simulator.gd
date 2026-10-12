@@ -719,7 +719,7 @@ func _collide(c: Chain, g: Group, friction: float) -> bool:
 		var start := x[i]
 		# solve on the sphere of the segment length around the parent: converges locally,
 		# even between two capsules (knee) or next to the attachment point
-		for _iter in 4:
+		for _iter in 8:
 			var moved := false
 			for k in ncap:
 				var q := x[i]

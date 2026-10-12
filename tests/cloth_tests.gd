@@ -6,9 +6,13 @@ extends SceneTree
 ## leg swing) and steps the simulator at 60 fps, then checks stability and behaviour.
 
 const DT := 1.0 / 60.0
-const OUTFITS := {
+const ALL_OUTFITS := {
 	"mustang": "res://assets/outfits/tenue_mustang.glb",
 	"edward": "res://assets/outfits/tenue_edward.glb",
+	"riza": "res://assets/outfits/tenue_riza.glb",
+	"olivier": "res://assets/outfits/tenue_olivier.glb",
+	"scar": "res://assets/outfits/tenue_scar.glb",
+	"winry": "res://assets/outfits/tenue_winry.glb",
 }
 
 var failures := 0
@@ -31,7 +35,15 @@ var scenario := ""
 var worst := ""
 
 
+var OUTFITS := {}
+
+
 func _initialize() -> void:
+	# optional filter: godot -s res://tests/cloth_tests.gd -- olivier scar
+	var only := OS.get_cmdline_user_args()
+	for k in ALL_OUTFITS:
+		if only.is_empty() or only.has(k):
+			OUTFITS[k] = ALL_OUTFITS[k]
 	await process_frame  # the root viewport must be in the tree before adding scenes
 	for key in OUTFITS:
 		print("\n=== ", key, " ===")
@@ -47,6 +59,7 @@ func _initialize() -> void:
 
 var key_name := ""
 var rest_off := 0.0
+var last_acc := {}
 
 
 func _setup(key: String) -> void:
@@ -220,11 +233,30 @@ func _run_all() -> void:
 		peak = maxf(peak, samples[i])
 	_check(absf(samples[179] - rest_off) < 0.02 and samples[179] < peak * 0.5,
 		"the fabric returns progressively to equilibrium")
-	# jitter = frame-to-frame acceleration of the tips once the swing has calmed down
-	var jerk := 0.0
-	for i in range(61, samples.size() - 1):
-		jerk = maxf(jerk, absf(samples[i + 1] - 2.0 * samples[i] + samples[i - 1]))
-	_check(jerk < 0.002, "no jitter / popping while settling (max tip acceleration %.5f m/frame²)" % jerk)
+	# jitter = acceleration of a tip that flips direction every frame (frame-rate shaking).
+	# A swinging coat may accelerate strongly, but smoothly.
+	var flips := 0
+	last_acc.clear()
+	var n_chains := sim.get_chain_count("coat")
+	var hist := []
+	for _k in 3:
+		hist.append([])
+	for i in 90:
+		_frame(Vector3.ZERO)
+		var tips := []
+		for c in n_chains:
+			var pts := sim.get_chain_points("coat", c)
+			tips.append(pts[pts.size() - 1])
+		hist.pop_front()
+		hist.append(tips)
+		if i >= 3 and not hist[0].is_empty():
+			for c in n_chains:
+				var a1: Vector3 = hist[2][c] - 2.0 * hist[1][c] + hist[0][c]
+				var a0: Vector3 = last_acc.get(c, Vector3.ZERO)
+				if a1.length() > 0.0005 and a0.length() > 0.0005 and a1.dot(a0) < -0.5 * a1.length() * a0.length():
+					flips += 1
+				last_acc[c] = a1
+	_check(flips <= 2, "no jitter while settling (%d frame-rate direction flips)" % flips)
 
 	# settle long enough to sleep
 	scenario = "idle"
@@ -257,7 +289,11 @@ func _run_all() -> void:
 	print("  jump: max reaction in the air %.3f m, lift while falling %.3f m, landing %.3f m -> %.3f m after 1.5 s"
 		% [air_react, fall_lift, land_peak, land_after])
 	_check(air_react > 0.015, "jump: the fabric follows the impulse with its own motion")
-	_check(fall_lift > 0.005, "fall: air opens / lifts the hem")
+	var hem_len := 0.0
+	for l in sim.get_chain_rest_lengths("coat", 0):
+		hem_len += l
+	_check(fall_lift > hem_len * 0.015, "fall: air opens / lifts the hem (%.1f %% of the %.2f m panel)"
+		% [fall_lift / hem_len * 100.0, hem_len])
 	_check(land_peak > land_after * 1.5 and land_after < rest_off + 0.03, "landing: impact reaction, then back to rest")
 	_idle(2.0)
 

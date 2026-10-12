@@ -6,7 +6,7 @@ extends Node3D
 ##
 ## Scene layout: ClothOutfit (this script) > instance of the outfit .glb
 
-@export_enum("auto", "mustang", "edward", "custom") var preset := "auto"
+@export_enum("auto", "mustang", "edward", "riza", "olivier", "scar", "winry", "custom") var preset := "auto"
 ## Used when [member preset] is "custom".
 @export var custom_groups: Array[ClothChainGroup] = []
 @export var custom_colliders: Array[ClothCollider] = []
@@ -64,8 +64,16 @@ func add_pose_modifier(mod: SkeletonModifier3D) -> void:
 func resolved_preset() -> String:
 	if preset != "auto":
 		return preset
-	if skeleton.find_bone("holster_00_0") >= 0:
+	if skeleton.find_bone("sword_00_0") >= 0:
+		return "olivier"
+	if skeleton.find_bone("sash_00_0") >= 0:
+		return "scar"
+	if skeleton.find_bone("sleeve_00_0") >= 0:
+		return "winry"
+	if skeleton.find_bone("aiguillette_00_0") >= 0:
 		return "mustang"
+	if skeleton.find_bone("holster_00_0") >= 0:
+		return "riza"
 	if skeleton.find_bone("coat_00_0") >= 0:
 		return "edward"
 	return "custom"
