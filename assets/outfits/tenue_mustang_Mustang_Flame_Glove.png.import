@@ -1,0 +1,37 @@
+[remap]
+
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://bilggj2vl2plg"
+path="res://.godot/imported/tenue_mustang_Mustang_Flame_Glove.png-2a1fdea523fe15fd8808b9ff162aab09.ctex"
+metadata={
+"vram_texture": false
+}
+generator_parameters={
+"md5": "470dcfbd2a4920e9c82848308dce9f1b"
+}
+
+[deps]
+
+source_file="res://assets/outfits/tenue_mustang_Mustang_Flame_Glove.png"
+dest_files=["res://.godot/imported/tenue_mustang_Mustang_Flame_Glove.png-2a1fdea523fe15fd8808b9ff162aab09.ctex"]
+
+[params]
+
+compress/mode=0
+compress/high_quality=false
+compress/lossy_quality=0.7
+compress/hdr_compression=1
+compress/normal_map=0
+compress/channel_pack=0
+mipmaps/generate=true
+mipmaps/limit=-1
+roughness/mode=0
+roughness/src_normal=""
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/normal_map_invert_y=false
+process/hdr_as_srgb=false
+process/hdr_clamp_exposure=false
+process/size_limit=0
+detect_3d/compress_to=1

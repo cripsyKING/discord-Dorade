@@ -1,0 +1,16 @@
+; Engine configuration file.
+config_version=5
+
+[application]
+
+config/name="Dorade - Secondary Cloth Motion"
+run/main_scene="res://demo/demo.tscn"
+config/features=PackedStringArray("4.4", "Forward Plus")
+
+[physics]
+
+common/physics_ticks_per_second=60
+
+[rendering]
+
+anti_aliasing/quality/msaa_3d=2
